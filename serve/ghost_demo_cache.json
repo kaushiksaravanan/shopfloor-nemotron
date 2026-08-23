@@ -1,0 +1,138 @@
+{
+  "_format_version": "1.0",
+  "_generated_by": "Nemotron-SAP-Manufacturing-v1-NVFP4 (ghost cache)",
+  "_calibration_date": "2026-07-01",
+  "entries": [
+    {
+      "id": "bearing_jam_p3_hinglish",
+      "user": "बेयरिंग जाम, P3 line down, motor गरम हो रहा है, कल से ये problem है",
+      "assistant": {
+        "task_type": "rca",
+        "probable_cause": "Lubrication failure causing bearing seizure on P3 line motor — heat buildup confirms cumulative wear; previous-day onset suggests progressive lubricant breakdown rather than acute fault",
+        "corrective_action": "1. Immediate: Lockout-Tagout (LOTO) P3 line, replace bearing assembly (IS 14366 compliant). 2. Lubricate replacement bearing with IS 4250 Grade 2 grease. 3. Vibration baseline reading post-install. 4. Root cause: schedule lubrication SOP audit, check IS 13283 condition-monitoring records",
+        "MTTR_min": 75,
+        "IS_reference": "IS 14366:1996",
+        "IS_title": "Rolling Bearings — Dynamic Load Ratings and Rating Life",
+        "HSN_code": "84821010",
+        "HSN_description": "Ball Bearings (Radial)",
+        "GST_rate": "18%",
+        "related_tcodes": ["IW21", "IW31", "IK11"],
+        "spares_required": [
+          {"sap_material": "MAT-BRG-6308-2RS", "qty": 1, "description": "Deep-groove ball bearing 6308-2RS (P3 motor DE)"},
+          {"sap_material": "MAT-LUB-IS4250-G2", "qty": 0.25, "description": "IS 4250 Grade 2 lithium-base grease, 250g cartridge"}
+        ],
+        "confidence": 0.91,
+        "language_detected": "hi-IN+en-IN"
+      },
+      "latency_ms": 312,
+      "_meta": {"task_type": "rca", "scenario": "bearing_jam_hinglish"}
+    },
+    {
+      "id": "tamil_pump_hsn_classification",
+      "user": "புதிய industrial pump, 5 HP, water transfer, what's the HSN?",
+      "assistant": {
+        "task_type": "hsn",
+        "hsn_code": "84137010",
+        "description": "Industrial centrifugal pump, 5 HP, water transfer application — falls under 'pumps for liquids, fitted or designed to be fitted with a measuring device' / industrial water pumps",
+        "hsn_chapter": "84 — Nuclear reactors, boilers, machinery and mechanical appliances",
+        "hsn_heading": "8413 — Pumps for liquids",
+        "hsn_subheading": "84137010 — Industrial Pumps (Single Stage Centrifugal)",
+        "gst_rate": "18%",
+        "customs_tariff_section": "XVI",
+        "rationale": "Industrial pumps for water/liquid transfer below domestic-pump threshold use HSN 84137010. 5 HP rating excludes 84137091 (other pumps). GST 18% per Schedule III. Suggest verifying with CBIC HSN advance ruling for project-specific application",
+        "alternative_codes_considered": [
+          {"code": "84137091", "rejected_reason": "Submersible-specific — not applicable for surface water transfer"},
+          {"code": "84137099", "rejected_reason": "Catch-all for other centrifugal pumps; 84137010 is more specific for single-stage industrial use"}
+        ],
+        "confidence": 0.87,
+        "language_detected": "ta-IN+en-IN"
+      },
+      "latency_ms": 287,
+      "_meta": {"task_type": "hsn", "scenario": "tamil_pump_hsn"}
+    },
+    {
+      "id": "bis_food_compressor_compliance",
+      "user": "Can we use this rotary screw compressor for food-grade water bottling? Need to know which IS standard applies and if it needs to be oil-free.",
+      "assistant": {
+        "task_type": "bis",
+        "is_reference": "IS 14543:2004",
+        "title": "Packaged Drinking Water (Other Than Packaged Natural Mineral Water) — Specification",
+        "applicability": "IS 14543 mandates that compressed air contacting packaging or product must be from oil-free or food-grade compressors. Rotary screw compressors with carbon-ring seals and class 0 air quality (per ISO 8573-1:2010) are compliant. Standard lubricated rotary screw is NOT compliant for direct food contact.",
+        "recommendation": "Verify compressor data sheet specifies ISO 8573-1 Class 0 oil-free output. If not, install IS 14543 Annex C filtration train (coalescing + carbon + sterile).",
+        "compliance_checklist": [
+          "Compressor data sheet declares ISO 8573-1:2010 Class 0 output?",
+          "If lubricated: H1 food-grade lubricant only (NSF registered)?",
+          "Annex C filtration train installed (coalescing → activated carbon → 0.01 µm sterile)?",
+          "Third-party IS 14543 audit on file (<12 months)?",
+          "FSSAI license valid for the bottling line?"
+        ],
+        "verdict": "conditional — compliant only if Class 0 oil-free OR H1 lubricant + Annex C filtration verified",
+        "related_hsn": "84143000",
+        "related_tcode": "QM01",
+        "confidence": 0.89,
+        "related_standards": ["IS 14543:2004", "ISO 8573-1:2010"],
+        "language_detected": "en-IN"
+      },
+      "latency_ms": 367,
+      "_meta": {"task_type": "bis", "scenario": "food_compressor_compliance"}
+    },
+    {
+      "id": "tamil_meter_qc_sap_pm_draft",
+      "user": "மீட்டர் வேலை செய்யவில்லை, conveyor speed reading wrong from this morning, line-2 BIS QC check failing, urgent priority",
+      "assistant": {
+        "task_type": "sap_pm_draft",
+        "tcode": "IW21",
+        "tcode_description": "Create PM Notification",
+        "notification_type": "M2",
+        "notification_type_description": "Malfunction Report",
+        "priority": "1-Very High",
+        "priority_rationale": "BIS QC blocked + operator-flagged urgent — escalates to P1 per shift-level SOP",
+        "probable_cause": "Tachogenerator or proximity sensor on conveyor speed measurement failed — feeding incorrect RPM to SCADA/PLC; likely either sensor drift, cable damage, or signal-conditioning failure",
+        "corrective_action": "1. Verify sensor power & signal cable continuity. 2. Replace sensor module (consult drawing 4750-PM-CONV-02). 3. Recalibrate via IK11 measurement document. 4. Document in MN03 maintenance log. 5. Re-run BIS QC sample batch before line release.",
+        "workflow_sequence": [
+          {"step": 1, "tcode": "IW21", "action": "Create M2 notification with Functional Location Line-2/Conveyor/Speed-Sensor-01"},
+          {"step": 2, "tcode": "IK11", "action": "Log last-known reading + status INVALID"},
+          {"step": 3, "tcode": "IW31", "action": "Convert to maintenance order, dispatch instrument tech"},
+          {"step": 4, "tcode": "IW41", "action": "Confirm maintenance order completion with calibration certificate"},
+          {"step": 5, "tcode": "IW22", "action": "Close notification with QC re-test pass result"}
+        ],
+        "measurement_doc_tcode": "IK11",
+        "functional_location": "Line-2/Conveyor/Speed-Sensor-01",
+        "MTTR_min": 45,
+        "IS_reference": "IS 1432:2011",
+        "IS_title": "Specification for Industrial Process Measurement and Control Instruments — Calibration",
+        "related_hsn": "90283010",
+        "confidence": 0.84,
+        "language_detected": "ta-IN+en-IN"
+      },
+      "latency_ms": 421,
+      "_meta": {"task_type": "sap_pm_draft", "scenario": "tamil_meter_qc_block"}
+    },
+    {
+      "id": "ambiguous_query_refusal",
+      "user": "Some issue with the line, looks like vibration but not sure, maybe temperature also",
+      "assistant": {
+        "task_type": "refusal",
+        "status": "insufficient_context_refuse",
+        "confidence": 0.42,
+        "confidence_threshold": 0.60,
+        "reasoning": "Query lacks specific symptoms, machine ID, time of onset, and severity. Confidence below DPDP-compliant action threshold (0.6). Cannot generate reliable RCA or SAP-PM notification without further information.",
+        "clarifying_questions": [
+          "Which line/machine? (Functional Location ID or equipment number)",
+          "Vibration severity — single point check or trending? (provide reading if available)",
+          "Temperature reading — ambient delta or absolute °C?",
+          "When did the symptoms start? (shift / hour / since last PM cycle)",
+          "Any safety-critical risk? (operators evacuated, line stopped?)"
+        ],
+        "next_step": "human_in_loop_required",
+        "escalation": "Notify shift supervisor + create IW21 informational notification with current observations",
+        "IS_reference": null,
+        "HSN_code": null,
+        "tcode": null,
+        "language_detected": "en-IN"
+      },
+      "latency_ms": 198,
+      "_meta": {"task_type": "refusal", "scenario": "ambiguous_confidence_refusal"}
+    }
+  ]
+}

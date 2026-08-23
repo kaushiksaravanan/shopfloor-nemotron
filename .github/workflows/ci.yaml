@@ -1,0 +1,91 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    name: ruff + pytest (py${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python }}
+        run: uv python install ${{ matrix.python }}
+
+      - name: Install project (CPU-only, no NeMo wheels)
+        run: uv sync --extra dev --extra serve
+
+      - name: Ruff check
+        run: uv run ruff check .
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+      - name: Pytest
+        run: uv run pytest -q -m "not slow and not integration" --cov=src/shopfloor_nemotron --cov-report=xml
+
+      - name: Upload coverage
+        if: matrix.python == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: ignore
+
+  freeze-check:
+    name: hard-freeze guard
+    runs-on: ubuntu-latest
+    env:
+      # Set this repo secret/variable to an ISO-8601 UTC timestamp at T-12h.
+      # Example: 2026-07-31T18:00:00Z
+      FREEZE_TIMESTAMP: ${{ vars.FREEZE_TIMESTAMP }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enforce freeze
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${FREEZE_TIMESTAMP:-}" ]]; then
+            echo "FREEZE_TIMESTAMP not set — freeze not yet in effect, skipping."
+            exit 0
+          fi
+          freeze_epoch=$(date -u -d "${FREEZE_TIMESTAMP}" +%s)
+          commit_epoch=$(git log -1 --format=%ct HEAD)
+          commit_msg=$(git log -1 --format=%B HEAD)
+          echo "Freeze:  ${FREEZE_TIMESTAMP} (epoch ${freeze_epoch})"
+          echo "Commit:  $(date -u -d @${commit_epoch} +%FT%TZ) (epoch ${commit_epoch})"
+          if (( commit_epoch <= freeze_epoch )); then
+            echo "Commit lands before freeze — OK."
+            exit 0
+          fi
+          if grep -qF '[freeze-exempt]' <<<"${commit_msg}"; then
+            echo "Commit lands after freeze but is marked [freeze-exempt] — OK."
+            exit 0
+          fi
+          echo "::error::Commit lands after FREEZE_TIMESTAMP (${FREEZE_TIMESTAMP}) and is not [freeze-exempt]."
+          exit 1

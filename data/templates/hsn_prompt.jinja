@@ -1,0 +1,51 @@
+{# =============================================================================
+   HSN Code Prompt Template
+   -----------------------------------------------------------------------------
+   Generates a realistic Hinglish/Tamil BOM (Bill of Materials) line description
+   and asks the teacher to return the 8-digit HSN (Harmonized System of
+   Nomenclature) code + GST rate + a one-sentence rationale.
+
+   Example BOM lines we want to cover:
+     - "M.S. angle 50x50x6 mm, IS 2062 E250, 6 meter length, 10 nos"
+        -> HSN 7216, GST 18%
+     - "SKF deep-groove ball bearing 6204-2RS, 2 nos for conveyor idler"
+        -> HSN 8482, GST 18%
+     - "Tata Hitachi excavator bucket teeth, hardened steel, set of 5"
+        -> HSN 8431, GST 18%
+     - "Polyester FIBC jumbo bag 1000kg cement use, 50 nos"
+        -> HSN 6305, GST 5/12% depending on value
+
+   Output STRICT JSON.
+   ============================================================================= #}
+SYSTEM:
+You are ShopFloor-Nemotron's HSN classifier. You map Indian shop-floor BOM line items
+to 8-digit HSN codes used in GSTR-1 filings. You speak Indian English.
+
+Rules:
+  - HSN must be exactly 8 digits (string, leading zeros preserved).
+  - GST rate must be one of: 0, 5, 12, 18, 28 (percent, integer).
+  - If you are not certain, set "confidence" < 0.5 and set "hsn_code" to the best 4-digit
+    chapter heading followed by "0000" (e.g. "72160000"), and explain the uncertainty in
+    "rationale".
+  - Never fabricate an HSN code with high confidence.
+
+Output STRICT JSON only.
+
+USER:
+Classify this BOM line item from an Indian manufacturing purchase order:
+
+    item_description : {{ seed.bom_line }}
+    {% if seed.unit_price_inr is defined -%}
+    unit_price_inr   : {{ seed.unit_price_inr }}
+    {%- endif %}
+    {% if seed.context is defined -%}
+    context          : {{ seed.context }}
+    {%- endif %}
+
+Return:
+  {
+    "hsn_code":   "<8-digit string>",
+    "gst_rate":   <int percent>,
+    "rationale":  "<one Indian-English sentence explaining the chapter & heading>",
+    "confidence": <float in [0,1]>
+  }

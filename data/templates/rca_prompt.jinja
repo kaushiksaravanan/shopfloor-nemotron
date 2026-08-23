@@ -1,0 +1,63 @@
+{# =============================================================================
+   RCA (Root Cause Analysis) Prompt Template
+   -----------------------------------------------------------------------------
+   Generates a Hinglish/Tanglish shop-floor complaint VARIANT from a real seed,
+   plus a structured RCA JSON answer.
+
+   Example seed (Hinglish):
+     "Sir, CNC machine ka spindle baar baar trip ho raha hai shift ke beech mein,
+      coolant bhi normal hai, kya karna chahiye?"
+
+   Example seed (Tanglish / Tamil-English code-mix):
+     "Anna, lathe-la chuck grip aagala, workpiece slip aaguthu, IS 919 follow
+      pannanuma?"
+
+   Output fields expected from the teacher (assistant turn):
+     - complaint_variant   : a rewritten Hinglish/Tanglish complaint (NOT a copy)
+     - probable_cause      : <= 200 chars, plain English
+     - corrective_action   : numbered steps, plain English
+     - MTTR_min            : integer minutes
+     - IS_reference        : e.g. "IS 919:1993" or null if not applicable
+     - HSN_code            : 8-digit string or null
+     - confidence          : float in [0,1] — REQUIRED, must reflect uncertainty
+   ============================================================================= #}
+SYSTEM:
+You are ShopFloor-Nemotron, a manufacturing assistant trained on Indian shop-floor data.
+You write in Indian English (clear, direct, no flowery prose). When you cite a Bureau of
+Indian Standards (BIS) IS number you MUST include the year (e.g. "IS 2062:2011"). If you
+are not certain of the IS number, the HSN code, or the corrective action, you MUST set
+confidence < 0.5 AND set the uncertain field to null rather than fabricate a value.
+Never invent IS numbers. Never invent HSN codes. Refuse politely if the question requires
+guessing safety-critical information.
+
+Output STRICT JSON only — no markdown fences, no commentary outside the JSON object.
+
+USER:
+A maintenance technician on an Indian shop floor sent this WhatsApp message:
+
+    machine_type   : {{ seed.machine_type }}
+    symptom_codes  : {{ seed.symptom_codes | join(", ") }}
+    complaint (raw): {{ seed.complaint }}
+
+Tasks:
+  1. Produce a NATURAL Hinglish/Tanglish rewrite of the complaint as `complaint_variant`
+     (same intent, different phrasing — preserve code-mix; do NOT translate to pure English).
+  2. Produce a structured RCA JSON object with these keys exactly:
+
+       {
+         "complaint_variant":  "<hinglish/tanglish rewrite>",
+         "probable_cause":     "<one English sentence, <= 200 chars>",
+         "corrective_action":  "<numbered steps, English>",
+         "MTTR_min":           <integer minutes>,
+         "IS_reference":       "<IS XXXX:YYYY or null>",
+         "HSN_code":           "<8-digit string or null>",
+         "confidence":         <float in [0,1]>
+       }
+
+Constraints:
+  - If `symptom_codes` includes a safety code (e.g. E-STOP, GAS-LEAK, ELEC-SHOCK),
+    `corrective_action` MUST begin with "STOP machine, LOTO, then ...".
+  - If you are unsure of the IS number, set IS_reference to null and confidence <= 0.4.
+  - MTTR_min must be a realistic integer (5..480).
+
+Respond with ONLY the JSON object.

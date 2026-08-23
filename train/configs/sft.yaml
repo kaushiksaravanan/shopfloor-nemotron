@@ -1,0 +1,74 @@
+# SFT LoRA config for ShopFloor-Nemotron.
+# Mirrors the CLI defaults in train/sft.py for reproducibility.
+# See workshop deck (slide 12, "NeMo AutoModel vs Megatron-Core"):
+#   - <1000 GPU rule -> AutoModel
+#   - 2.5x faster than HF, 1.2x faster than Unsloth on H100
+
+model:
+  name: nvidia/Nemotron-Nano-9B-v2
+  trust_remote_code: true
+  torch_dtype: bfloat16
+
+# PEFT / LoRA
+lora:
+  rank: 32
+  alpha: 64
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  bias: none
+  task_type: CAUSAL_LM
+
+# Optimisation
+training:
+  epochs: 3
+  micro_batch_size: 1
+  grad_accum_steps: 64        # effective batch = 64
+  learning_rate: 2.0e-4
+  lr_scheduler: cosine
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  max_seq_length: 4096
+  bf16: true
+  gradient_checkpointing: true
+  optim: adamw_torch_fused
+  seed: 42
+
+# Distributed
+distributed:
+  strategy: fsdp2              # NeMo AutoModel device_mesh API
+  sharding_strategy: full_shard
+  cpu_offload: false
+
+# Data
+data:
+  train_file: data/curated/train.jsonl
+  eval_file: data/curated/eval.jsonl
+  prompt_field: prompt
+  response_field: response
+  packing: true
+
+# Output / logging
+output:
+  dir: outputs/sft
+  save_steps: 200
+  save_total_limit: 3
+  logging_steps: 10
+  eval_steps: 100
+
+wandb:
+  project: shopfloor-nemotron
+  entity: null
+  tags: [sft, lora, nemotron-nano, shopfloor]
+
+# Dry-run override (laptop smoke test, 10 steps, synthetic data)
+dry_run:
+  enabled: false
+  max_steps: 10
+  synthetic_examples: 64

@@ -1,0 +1,59 @@
+# =============================================================================
+# gym/docker-compose.yaml
+# Local dev / single-node staging for the ShopFloor-Nemotron Gym.
+# Production: use the same image behind a Kubernetes Deployment, with the
+# Redis service (commented out below) enabled for shared session state.
+# =============================================================================
+version: "3.9"
+
+services:
+  nemo-gym:
+    build:
+      # Build context is the repo root so the Dockerfile can COPY eval/ + gym/.
+      context: ..
+      dockerfile: gym/Dockerfile
+    image: shopfloor-nemotron-gym:0.1.0
+    container_name: nemo-gym
+    ports:
+      - "8000:8000"
+    environment:
+      # Pointer for the verifier code; PYTHONPATH already set in the image.
+      - GYM_LOG_LEVEL=info
+      # Uncomment + change when wiring Redis:
+      # - GYM_REDIS_URL=redis://redis:6379/0
+    volumes:
+      # Read-only mount of eval/ so reward fixtures (CSVs, Pydantic schemas)
+      # can be hot-swapped without rebuilding the image during development.
+      - ../eval:/app/eval:ro
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).status==200 else 1)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    # depends_on:
+    #   redis:
+    #     condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Redis — required for multi-replica deployments so sessions survive a
+  # single-replica restart and are shared across workers. Disabled by default
+  # so the dev compose stays single-service.
+  # ---------------------------------------------------------------------------
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: nemo-gym-redis
+  #   ports:
+  #     - "6379:6379"
+  #   command: ["redis-server", "--save", "", "--appendonly", "no"]
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 5
+  #   restart: unless-stopped

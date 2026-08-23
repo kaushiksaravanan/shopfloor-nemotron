@@ -1,0 +1,62 @@
+# GRPO RL config for ShopFloor-Nemotron.
+# Mirrors CLI defaults in train/rl_grpo.py.
+# Loaded on top of the SFT-merged checkpoint.
+
+model:
+  # Path produced by train/sft.py merge step. Override via --model on CLI.
+  sft_checkpoint: outputs/sft/merged
+  torch_dtype: bfloat16
+  trust_remote_code: true
+
+# Gym environment (FastAPI verifier under gym/)
+env:
+  gym_url: http://localhost:8000
+  reset_endpoint: /reset
+  step_endpoint: /step
+  verify_endpoint: /verify
+  timeout_s: 30
+
+# GRPO hyperparameters
+grpo:
+  group_size: 8
+  kl_coef: 0.04
+  learning_rate: 1.0e-6
+  max_steps: 200
+  rollout_batch_size: 32
+  train_batch_size: 8
+  max_new_tokens: 1024
+  temperature: 0.8
+  top_p: 0.95
+  clip_ratio: 0.2
+
+# Reward shaping — components returned by /verify
+reward_weights:
+  schema_match: 0.20      # JSON parses + required keys present
+  bis: 0.30               # correct IS-number citation
+  hsn: 0.30               # correct HSN code (6-8 digit)
+  tcode: 0.10             # correct SAP-PM T-code (IW21/IK11/etc.)
+  conf_cal: 0.10          # confidence calibration (Brier-style)
+
+# Anti reward-hacking: penalise degenerate empty-JSON gaming.
+# Applied in the custom reward wrapper inside train/rl_grpo.py.
+penalties:
+  empty_json: -1.0
+  no_bis_citation_when_required: -0.3
+  length_under_tokens: 20
+  length_under_penalty: -0.5
+
+# Logging
+wandb:
+  project: shopfloor-nemotron
+  entity: null
+  tags: [grpo, rl, nemotron-nano, shopfloor]
+  log_reward_components: true
+
+output:
+  dir: outputs/grpo
+  save_steps: 50
+
+dry_run:
+  enabled: false
+  max_steps: 5
+  mock_rewards: true

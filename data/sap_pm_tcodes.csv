@@ -1,0 +1,31 @@
+tcode,description,module,frequency
+IW21,Create PM Notification,PM,high
+IW22,Change PM Notification,PM,high
+IW23,Display PM Notification,PM,high
+IW24,Create PM Notification (Quick Entry),PM,medium
+IW25,Create Activity Report,PM,medium
+IW26,Create General Notification,PM,medium
+IW28,Change PM Notifications (List Editing),PM,high
+IW29,Display PM Notifications (List Editing),PM,high
+IW30,Multi-Level List of Notifications,PM,medium
+IW31,Create Maintenance Order,PM,high
+IW32,Change Maintenance Order,PM,high
+IW33,Display Maintenance Order,PM,high
+IW34,Create Maintenance Order from Notification,PM,high
+IW37,Order Operations List,PM,medium
+IW38,Change Maintenance Orders (List Editing),PM,high
+IW39,Display Maintenance Orders (List Editing),PM,high
+IW40,Display Order Overview,PM,medium
+IW41,Confirmation of Maintenance Order,PM,high
+IW42,Overall Completion Confirmation,PM,high
+IW47,Confirmations List,PM,medium
+IW64,Action Log for Notification,PM,low
+IW65,Action Log for Order,PM,low
+IK11,Create Measurement Document,PM,high
+IK12,Change Measurement Document,PM,medium
+IK13,Display Measurement Document,PM,medium
+IK17,Display Measurement Documents (List),PM,medium
+IH01,Functional Location Structure,PM,high
+IH03,Display Equipment Structure,PM,medium
+IH08,Display Equipment (List Editing),PM,high
+MN03,Display Maintenance Plan,PM,medium
